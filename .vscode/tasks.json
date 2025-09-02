@@ -1,0 +1,131 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cmake",
+			"label": "build_all",
+			"hide": true,
+			"command": "build"
+		},
+		{
+			"type": "shell",
+			"label": "flash_boot",
+			"command": "pyocd",
+			"args": [
+				"load",
+				"--target",
+				"STM32H750VBTx",
+				"--frequency",
+				"10M",
+				"--erase",
+				"sector",
+				"${workspaceFolder}/build/source/boot/boot.hex",
+				"--uid",
+				"A429359E62920FDD1A1044C4414F8DEA"
+			],
+			"problemMatcher": [],
+			"dependsOn": [
+				"build_all"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "flash_app_rtos",
+			"command": "pyocd",
+			"args": [
+				"load",
+				"--target",
+				"STM32H750VBTx",
+				"--script",
+				"${workspaceFolder}/scripts/pyocd/pyocd_user.py",
+				"--frequency",
+				"10M",
+				"--erase",
+				"chip", // 添加的内存区域必须全片擦除才能调用FLM算法
+				"--base-address",
+				"0x90000000", // 为了避开RAM_D2地址，实际运行在0x24000000
+				"${workspaceFolder}/build/source/app_rtos/app_rtos.bin", // 避免地址不匹配
+				"--uid",
+				"A429359E62920FDD1A1044C4414F8DEA"
+			],
+			"problemMatcher": [],
+			"dependsOn": [
+				"build_all"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "pyocd_load_flash_stm32f1",
+			"command": "pyocd",
+			"args": [
+				"load",
+				"--target",
+				"STM32F103RC",
+				"--erase",
+				"chip",
+				// "sector",
+				"--frequency",
+				"10M",
+				// "--base-address",
+				// "0x08000000",
+				"${workspaceFolder}/dap_test.hex",
+				"--uid",
+				"00017CDBDBEA",
+			],
+			"problemMatcher": [],
+		},
+		{
+			"type": "shell",
+			"label": "pyocd_load_ram_stm32f1",
+			"command": "pyocd",
+			"args": [
+				"load",
+				"--target",
+				"STM32F103RC",
+				"--frequency",
+				"30M",
+				"--base-address",
+				"0x20000000",
+				"${workspaceFolder}/dap_test.bin",
+				"--uid",
+				"00017CDBDBEA",
+			],
+			"problemMatcher": [],
+		},
+		{
+			"type": "shell",
+			"label": "probe-rs_load_bench_stm32f1",
+			"command": "probe-rs",
+			"args": [
+				"benchmark",
+ 				"--address",
+				"0x20000000",
+				"--chip",
+				"STM32F103RC",
+				"--protocol",
+				"swd",
+				"--speed",
+				"30000",
+				"--probe",
+				"0d28:0204",
+				"--iterations",
+				"20",
+			],
+			"problemMatcher": [],
+		},
+		{
+			"type": "shell",
+			"label": "openocd_stm32f1",
+			"command": "${workspaceFolder}/toolchain/openocd/bin/openocd.exe",
+			"args": [
+				"-f",
+				"${workspaceFolder}/toolchain/openocd/share/openocd/scripts/interface/cmsis-dap.cfg",
+				"-f",
+				"${workspaceFolder}/toolchain/openocd/share/openocd/scripts/target/stm32f1x.cfg",
+				"-c",
+				"adapter_khz 10000"
+			],
+			"problemMatcher": [],
+		},
+	]
+}

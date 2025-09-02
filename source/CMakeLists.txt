@@ -1,0 +1,12 @@
+﻿# 添加子文件夹
+add_subdirectory("app_rtos")
+add_subdirectory("boot")
+add_subdirectory("bsp")
+add_subdirectory("hal")
+add_subdirectory("cherryusb")
+add_subdirectory("device")
+add_subdirectory("ulog")
+add_subdirectory("dap")
+add_subdirectory("lwxm")
+add_subdirectory("threadx")
+add_subdirectory("cmsis")

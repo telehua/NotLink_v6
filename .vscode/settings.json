@@ -1,0 +1,19 @@
+{
+    "C_Cpp.clang_format_style": "{ BasedOnStyle: Microsoft, ColumnLimit: 0 }",
+    "cmake.cmakePath": "${workspaceFolder}/toolchain/cmake/bin/cmake.exe",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.generator": "Ninja",
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "*.h": "c",
+        "*.c": "c",
+        "*.in": "c",
+        "bitset": "c",
+        "algorithm": "c",
+        "format": "c"
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": [],
+    "cortex-debug.variableUseNaturalFormat": false,
+}

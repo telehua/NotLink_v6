@@ -1,0 +1,55 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${workspaceFolder}/build",
+            "toolchainFile": "${workspaceFolder}/scripts/cmake/arm-gcc-cortex-m7.cmake",
+            "cacheVariables": {
+                "ARM_TOOLCHAIN_PATH": "${workspaceFolder}/toolchain/arm-none-eabi-gcc/bin",
+                "CMAKE_MAKE_PROGRAM": "${workspaceFolder}/toolchain/ninja/ninja.exe"
+            },
+            "cmakeExecutable": "${workspaceFolder}/toolchain/cmake/bin/cmake.exe"
+        },
+        {
+            "name": "Debug",
+            "displayName": "Debug",
+            "description": "",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Release",
+            "displayName": "Release",
+            "description": "",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Debug",
+            "configurePreset": "Debug"
+        },
+        {
+            "name": "Release",
+            "configurePreset": "Release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "Debug",
+            "configurePreset": "Debug"
+        },
+        {
+            "name": "Release",
+            "configurePreset": "Release"
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+function(set_target_linker TARGET LINKER_SCRIPT)
+    target_link_options(${TARGET} PRIVATE -T${LINKER_SCRIPT})
+    target_link_options(${TARGET} PRIVATE -Wl,-Map=${TARGET}.map)
+    set_target_properties(${TARGET} PROPERTIES SUFFIX ".elf")
+endfunction()
