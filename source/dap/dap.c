@@ -379,10 +379,10 @@ static uint32_t DAP_HostStatus(const uint8_t *request, uint8_t *response)
     switch (*request)
     {
     case DAP_DEBUGGER_CONNECTED:
-        (*(request + 1) & 1U) ? bsp_led_set(LED_CONNECT) : bsp_led_reset(LED_CONNECT);
+        (*(request + 1) & 1U) ? bsp_led_on(LED_CONNECT) : bsp_led_off(LED_CONNECT);
         break;
     case DAP_TARGET_RUNNING:
-        (*(request + 1) & 1U) ? bsp_led_set(LED_RUNNING) : bsp_led_reset(LED_RUNNING);
+        (*(request + 1) & 1U) ? bsp_led_on(LED_RUNNING) : bsp_led_off(LED_RUNNING);
         break;
     default:
         *response = DAP_ERROR;

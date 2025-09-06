@@ -9,7 +9,7 @@
 		},
 		{
 			"type": "shell",
-			"label": "flash_boot",
+			"label": "pyocd_load_flash_boot",
 			"command": "pyocd",
 			"args": [
 				"load",
@@ -30,7 +30,7 @@
 		},
 		{
 			"type": "shell",
-			"label": "flash_app_rtos",
+			"label": "pyocd_load_flash_app_rtos",
 			"command": "pyocd",
 			"args": [
 				"load",
@@ -115,7 +115,7 @@
 		},
 		{
 			"type": "shell",
-			"label": "openocd_stm32f1",
+			"label": "openocd_load_flash_stm32f1",
 			"command": "${workspaceFolder}/toolchain/openocd/bin/openocd.exe",
 			"args": [
 				"-f",
@@ -123,7 +123,19 @@
 				"-f",
 				"${workspaceFolder}/toolchain/openocd/share/openocd/scripts/target/stm32f1x.cfg",
 				"-c",
-				"adapter_khz 10000"
+				"transport select swd",
+				"-c",
+				"adapter speed 10000",
+				"-c",
+				"init",
+				"-c",
+				"reset halt; wait_halt",
+				"-c",
+				"flash write_image erase dap_test.hex",
+				"-c",
+				"reset",
+				"-c",
+				"shutdown"
 			],
 			"problemMatcher": [],
 		},

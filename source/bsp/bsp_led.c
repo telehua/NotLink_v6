@@ -40,7 +40,7 @@ void bsp_led_init(void)
  * @param index LED_RUNNING
  *              LED_CONNECT
  */
-void bsp_led_set(uint8_t index)
+void bsp_led_on(uint8_t index)
 {
     switch (index)
     {
@@ -84,7 +84,7 @@ void bsp_led_toggle(uint8_t index)
  * @param index LED_RUNNING
  *              LED_CONNECT
  */
-void bsp_led_reset(uint8_t index)
+void bsp_led_off(uint8_t index)
 {
     switch (index)
     {

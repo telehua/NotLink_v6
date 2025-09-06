@@ -26,7 +26,7 @@ void board_init(void)
     sys_clock_config();
 
     bsp_debug_init();
-    ulog_init(ULOG_LEVEL_INFO);
+    ulog_init(ULOG_LEVEL_ERROR);
     ulog_info("App entry");
 
     bsp_tick_init();
@@ -42,6 +42,10 @@ void board_init(void)
     ulog_info("Build type: %s", CONFIG_BUILD_TYPE);
 }
 
+/**
+ * @brief 配置系统时钟
+ *
+ */
 void sys_clock_config(void)
 {
     LL_FLASH_SetLatency(LL_FLASH_LATENCY_4);
@@ -117,14 +121,32 @@ void sys_clock_config(void)
     LL_RCC_SetCLKPClockSource(LL_RCC_CLKP_CLKSOURCE_HSE);
 }
 
+/**
+ * @brief 配置MPU
+ *
+ */
 void sys_mpu_config(void)
 {
     /* Disables the MPU */
     LL_MPU_Disable();
 
-    /** Initializes and configures the Region and the memory to be protected */
+    uint8_t region = LL_MPU_REGION_NUMBER0;
 
-    LL_MPU_ConfigRegion(LL_MPU_REGION_NUMBER0,                 // AXIRAM，程序执行区域，只读
+    /* 外部存储器 */
+    LL_MPU_ConfigRegion(region++,                               // 外部存储器，不允许访问，防止Cache到处乱读引起总线错误
+                        0x87,                                   // 子区域
+                        0x00000000,                             // 起始地址，0x00000000
+                        LL_MPU_REGION_SIZE_4GB                  // 空间大小，4G，32位处理器全部大小
+                            | LL_MPU_TEX_LEVEL0                 // TEX0
+                            | LL_MPU_REGION_NO_ACCESS           // 不允许访问
+                            | LL_MPU_INSTRUCTION_ACCESS_DISABLE // 不可执行
+                            | LL_MPU_ACCESS_NOT_CACHEABLE       // C 关CACHE
+                            | LL_MPU_ACCESS_NOT_BUFFERABLE      // B 关缓冲
+                            | LL_MPU_ACCESS_SHAREABLE           // S 不共享，不需要多核一致性
+    );
+
+    /* AXIRAM */
+    LL_MPU_ConfigRegion(region++,                              // AXIRAM，程序执行区域，只读
                         0x00,                                  // 子区域全部使能
                         D1_AXISRAM_BASE,                       // 起始地址，AXIRAM
                         LL_MPU_REGION_SIZE_512KB               // 空间大小，512K
@@ -135,8 +157,9 @@ void sys_mpu_config(void)
                             | LL_MPU_ACCESS_BUFFERABLE         // B 开缓冲
                             | LL_MPU_ACCESS_NOT_SHAREABLE      // S 不共享，不需要多核一致性
     );
-
-    LL_MPU_ConfigRegion(LL_MPU_REGION_NUMBER1,                  // 外设区，保证寄存器正确操作
+#if 0
+    /* 外设 */
+    LL_MPU_ConfigRegion(region++,                               // 外设区，保证寄存器正确操作
                         0x00,                                   // 子区域全部使能
                         PERIPH_BASE,                            // 起始地址，外设区
                         LL_MPU_REGION_SIZE_512MB                // 空间大小，512M
@@ -147,8 +170,9 @@ void sys_mpu_config(void)
                             | LL_MPU_ACCESS_BUFFERABLE          // B 开缓冲
                             | LL_MPU_ACCESS_NOT_SHAREABLE       // S 不共享，不需要多核一致性
     );
-
-    LL_MPU_ConfigRegion(LL_MPU_REGION_NUMBER2,                  // D2SRAM，数据区域
+#endif
+    /* D2SRAM */
+    LL_MPU_ConfigRegion(region++,                               // D2SRAM，数据区域
                         0x00,                                   // 子区域全部使能
                         D2_AHBSRAM_BASE,                        // 起始地址，D2RAM
                         LL_MPU_REGION_SIZE_128KB                // 空间大小，128K
@@ -159,10 +183,11 @@ void sys_mpu_config(void)
                             | LL_MPU_ACCESS_BUFFERABLE          // B 开缓冲
                             | LL_MPU_ACCESS_NOT_SHAREABLE       // S 不共享，不需要多核一致性
     );
-
-    LL_MPU_ConfigRegion(LL_MPU_REGION_NUMBER3,                  // 核心寄存器，部分配置由硬件设定，MPU无法更改，这里仅作为占位
+#if 0
+    /* CPU私有寄存器 */
+    LL_MPU_ConfigRegion(region++,                               // 核心寄存器，部分配置由硬件设定，MPU无法更改，这里仅作为占位
                         0x00,                                   // 子区域全部使能
-                        0xE0000000UL,                           // 起始地址
+                        ITM_BASE,                               // 起始地址
                         LL_MPU_REGION_SIZE_1MB                  // 空间大小，1M
                             | LL_MPU_TEX_LEVEL0                 // TEX0
                             | LL_MPU_REGION_PRIV_RW             // 仅特权模式可访问
@@ -172,21 +197,23 @@ void sys_mpu_config(void)
                             | LL_MPU_ACCESS_SHAREABLE           // S 需要多核一致性
     );
 
-    LL_MPU_ConfigRegion(LL_MPU_REGION_NUMBER4,                 // ITCM，程序执行区域，只读
+    /* ITCM */
+    LL_MPU_ConfigRegion(region++,                              // ITCM，程序执行区域，只读
                         0x00,                                  // 子区域全部使能
-                        D1_ITCMRAM_BASE,                       // 起始地址，AXIRAM
+                        D1_ITCMRAM_BASE,                       // 起始地址，ITCMRAM
                         LL_MPU_REGION_SIZE_64KB                // 空间大小，64K
                             | LL_MPU_TEX_LEVEL0                // TEX0
-                            | LL_MPU_REGION_PRIV_RO_URO        // 只读，仅用于执行程序
+                            | LL_MPU_REGION_FULL_ACCESS        // 全部可访问
                             | LL_MPU_INSTRUCTION_ACCESS_ENABLE // 可执行
                             | LL_MPU_ACCESS_CACHEABLE          // C 开CACHE
                             | LL_MPU_ACCESS_BUFFERABLE         // B 开缓冲
                             | LL_MPU_ACCESS_NOT_SHAREABLE      // S 不共享，不需要多核一致性
     );
 
-    LL_MPU_ConfigRegion(LL_MPU_REGION_NUMBER5,                  // DTCM，数据区域
+    /* DTCM */
+    LL_MPU_ConfigRegion(region++,                               // DTCM，数据区域
                         0x00,                                   // 子区域全部使能
-                        D1_DTCMRAM_BASE,                        // 起始地址，D2RAM
+                        D1_DTCMRAM_BASE,                        // 起始地址，DTCMRAM
                         LL_MPU_REGION_SIZE_128KB                // 空间大小，128K
                             | LL_MPU_TEX_LEVEL0                 // TEX0
                             | LL_MPU_REGION_FULL_ACCESS         // 全部可访问
@@ -195,10 +222,12 @@ void sys_mpu_config(void)
                             | LL_MPU_ACCESS_BUFFERABLE          // B 开缓冲
                             | LL_MPU_ACCESS_NOT_SHAREABLE       // S 不共享，不需要多核一致性
     );
+#endif
 
     /* Enables the MPU */
     LL_MPU_Enable(LL_MPU_CTRL_PRIVILEGED_DEFAULT);
 
     // 打开指令缓存
     SCB_EnableICache();
+    SCB_EnableDCache();
 }

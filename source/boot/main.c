@@ -46,8 +46,8 @@ int main(void)
     bsp_jtag_init();
     bsp_vee_init();
 
-    bsp_led_set(LED_RUNNING);
-    bsp_led_set(LED_CONNECT);
+    bsp_led_on(LED_RUNNING);
+    bsp_led_on(LED_CONNECT);
 
     bsp_spi_init();
     w25_init();
@@ -91,7 +91,7 @@ int main(void)
         bsp_led_toggle(LED_RUNNING);
     }
     ulog_info("Erase done");
-    bsp_led_reset(LED_RUNNING);
+    bsp_led_off(LED_RUNNING);
 
     // 清理缓冲区
     while (bsp_debug_get_byte(&c) == 0)
@@ -111,8 +111,8 @@ int main(void)
 
 copy_app:
 
-    bsp_led_reset(LED_RUNNING);
-    bsp_led_set(LED_CONNECT);
+    bsp_led_off(LED_RUNNING);
+    bsp_led_on(LED_CONNECT);
 
     uint32_t estack = w25_read_word(0);
     ulog_info("App estack address: 0x%08X", estack);
@@ -123,12 +123,12 @@ copy_app:
         goto boot_error;
     }
 
-    bsp_led_set(LED_RUNNING);
+    bsp_led_on(LED_RUNNING);
     ulog_info("Copy app section to: 0x%08X, size: 0x%08X (%d bytes)", //
               APP_SECTION_ADDR, APP_SECTION_SIZE, APP_SECTION_SIZE);
     CopyApp(D1_AXISRAM_BASE, APP_SECTION_SIZE); // 复制APP
     ulog_info("Copy app section completed");
-    bsp_led_reset(LED_RUNNING);
+    bsp_led_off(LED_RUNNING);
 
     ulog_info("Jump to app");
     bsp_debug_deinit();

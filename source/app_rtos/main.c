@@ -26,9 +26,14 @@ int main(void)
     return 0;
 }
 
-// 至少创建一个任务
+/**
+ * @brief 任务初始化，由RTOS调用。至少创建一个任务
+ *
+ * @param first_unused_memory
+ */
 void tx_application_define(void *first_unused_memory)
 {
+    // usb
     tx_thread_create(&thread_usbd,
                      "thread_usbd",
                      thread_usbd_main,
@@ -40,6 +45,7 @@ void tx_application_define(void *first_unused_memory)
                      TX_NO_TIME_SLICE,
                      TX_AUTO_START);
 
+    // dap
     tx_thread_create(&thread_dap,
                      "thread_dap",
                      thread_dap_main,
@@ -53,7 +59,7 @@ void tx_application_define(void *first_unused_memory)
 }
 
 /**
- * @brief 格式化字符串打印
+ * @brief 格式化字符串打印，由标准库调用
  *
  * @param ch
  * @return int

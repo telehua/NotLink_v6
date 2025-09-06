@@ -18,8 +18,8 @@ enum BSP_LED
 };
 
 void bsp_led_init(void);
-void bsp_led_set(uint8_t index);
-void bsp_led_reset(uint8_t index);
+void bsp_led_on(uint8_t index);
+void bsp_led_off(uint8_t index);
 void bsp_led_toggle(uint8_t index);
 
 #endif /* __LED_H__ */
