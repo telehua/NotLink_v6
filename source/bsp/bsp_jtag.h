@@ -161,9 +161,9 @@
 
 typedef enum _jtag_port_enum
 {
-    JTAG_PORT_SWD = 0,
+    JTAG_PORT_GPIO = 0,
+    JTAG_PORT_SWD,
     JTAG_PORT_JTAG,
-    JTAG_PORT_GPIO,
 } jtag_port_t;
 
 typedef enum _jtag_gpio_enum
@@ -210,5 +210,6 @@ void bsp_jtag_enable_transfer_tms(void);
 void bsp_jtag_disable_transfer_tms(void);
 void bsp_jtag_enable_transfer_tdi_tdo(void);
 void bsp_jtag_disable_transfer_tdi_tdo(void);
+void bsp_jtag_check_gpio_mode(uint32_t mode);
 
 #endif /* __JTAG_H__ */

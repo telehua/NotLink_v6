@@ -6,10 +6,9 @@
 #include "stm32h7xx_ll_spi.h"
 #include "stm32h7xx_ll_tim.h"
 
-static swj_config_t swj_cfg = {
-    .port = JTAG_PORT_SWD, // SWD或JTAG
-    .tim_div_count = 24,
-};
+static uint32_t tim_div_count = 24;
+static uint8_t port_enable = JTAG_PORT_GPIO;
+static uint8_t port_gpio_mode = 1;
 
 static void jtag_set_gpio_af_mode(GPIO_TypeDef *GPIOx, uint32_t Pin, uint32_t Alternate);
 
@@ -135,6 +134,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
     switch (port)
     {
     case JTAG_PORT_SWD:
+        port_enable = JTAG_PORT_SWD;
 
         /* 主通信 */
         LL_SPI_StructInit(&SPI_InitStruct);
@@ -265,9 +265,9 @@ void bsp_jtag_enable_port(jtag_port_t port)
         JTAG_RESET_OEN_LOW();  // 开漏输出，这里仅作输入
         JTAG_RESET_OD_OUT(1U); // 不复位
 
-        swj_cfg.port = JTAG_PORT_SWD;
         break;
     case JTAG_PORT_JTAG:
+        port_enable = JTAG_PORT_JTAG;
 
         LL_SPI_StructInit(&SPI_InitStruct);
         LL_SPI_DeInit(SPI1); // 去使能，防止寄存器无法写入
@@ -437,9 +437,9 @@ void bsp_jtag_enable_port(jtag_port_t port)
         // DBGRQ->UART串口输入
         // 不修改
 
-        swj_cfg.port = JTAG_PORT_JTAG;
         break;
     case JTAG_PORT_GPIO:
+        port_enable = JTAG_PORT_GPIO;
 
         // TDI->UART串口输出
         JTAG_TDI_OEN_HIGH();                                                           // 串口输出
@@ -598,7 +598,7 @@ uint32_t bsp_jtag_set_tck_clock(uint32_t freq)
     }
 
     uint32_t count = div / pre;
-    swj_cfg.tim_div_count = count;
+    tim_div_count = count;
     uint32_t real_freq = (JTAG_TIM_CLOCK_FREQ / pre) / count; // 实际频率
 
     LL_TIM_SetPrescaler(TIM8, pre - 1U);
@@ -629,8 +629,8 @@ __INLINE void bsp_jtag_generate_data_cycle(uint32_t count, uint32_t n_bytes)
     LL_TIM_GenerateEvent_UPDATE(TIM8);
 #endif
 
-    LL_TIM_SetAutoReload(TIM4, swj_cfg.tim_div_count * (8U * n_bytes) + (swj_cfg.tim_div_count / 8U) - 1U);
-    LL_TIM_OC_SetCompareCH1(TIM4, swj_cfg.tim_div_count * count + (swj_cfg.tim_div_count / 8U));
+    LL_TIM_SetAutoReload(TIM4, tim_div_count * (8U * n_bytes) + (tim_div_count / 8U) - 1U);
+    LL_TIM_OC_SetCompareCH1(TIM4, tim_div_count * count + (tim_div_count / 8U));
 #if (JTAG_REG_OPTIMIZE != 0)
     LL_TIM_WriteReg(TIM4, EGR, TIM_EGR_UG);
 #else
@@ -660,9 +660,9 @@ void bsp_jtag_generate_dummy_cycle(uint32_t count)
 
     LL_TIM_OC_SetMode(TIM4, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_FORCED_ACTIVE); // 强制输出高
 
-    // LL_TIM_SetAutoReload(TIM4, swj_cfg.tim_div_count - 1U); //
-    // LL_TIM_OC_SetCompareCH1(TIM4, swj_cfg.tim_div_count);   // 永不禁止输出
-    // LL_TIM_WriteReg(TIM4, EGR, TIM_EGR_UG);                 // LL_TIM_GenerateEvent_UPDATE(TIM4);
+    // LL_TIM_SetAutoReload(TIM4, tim_div_count - 1U); //
+    // LL_TIM_OC_SetCompareCH1(TIM4, tim_div_count);   // 永不禁止输出
+    // LL_TIM_WriteReg(TIM4, EGR, TIM_EGR_UG);         // LL_TIM_GenerateEvent_UPDATE(TIM4);
 
 #if (JTAG_REG_OPTIMIZE != 0)
     LL_TIM_WriteReg(TIM8, CR1, TIM_CR1_ARPE | TIM_CR1_OPM | TIM_CR1_CEN);
@@ -910,4 +910,75 @@ __INLINE void bsp_jtag_disable_transfer_tdi_tdo(void)
 #else
     LL_SPI_SetInternalSSLevel(SPI3, LL_SPI_SS_LEVEL_LOW);
 #endif
+}
+
+/**
+ * @brief 检查GPIO模式
+ *
+ * @param mode  1: gpio模式
+ *              0: 复用模式
+ */
+void bsp_jtag_check_gpio_mode(uint32_t mode)
+{
+    if (port_gpio_mode == mode)
+    {
+        return;
+    }
+
+    port_gpio_mode = mode;
+    if (mode == 1)
+    {
+        // 切换为IO功能
+        switch (port_enable)
+        {
+        case JTAG_PORT_SWD:
+            JTAG_TCK_OEN_HIGH();
+            JTAG_TCK_OUT(1);
+            LL_GPIO_SetPinMode(JTAG_TCK_GEN_GPIO_Port, JTAG_TCK_GEN_Pin, LL_GPIO_MODE_OUTPUT); // 切回IO功能
+
+            JTAG_TMS_OEN_HIGH();
+            JTAG_TMS_OUT(1);
+            LL_GPIO_SetPinMode(JTAG_TMS_DO_GPIO_Port, JTAG_TMS_DO_Pin, LL_GPIO_MODE_OUTPUT); // 切回IO功能
+            LL_GPIO_SetPinMode(JTAG_TMS_DI_GPIO_Port, JTAG_TMS_DI_Pin, LL_GPIO_MODE_INPUT);  // 切回IO功能
+
+            break;
+        case JTAG_PORT_JTAG:
+            JTAG_TCK_OEN_HIGH();
+            JTAG_TCK_OUT(1);
+            LL_GPIO_SetPinMode(JTAG_TCK_GEN_GPIO_Port, JTAG_TCK_GEN_Pin, LL_GPIO_MODE_OUTPUT); // 切回IO功能
+
+            JTAG_TMS_OEN_HIGH();
+            JTAG_TMS_OUT(1);
+            LL_GPIO_SetPinMode(JTAG_TMS_DO_GPIO_Port, JTAG_TMS_DO_Pin, LL_GPIO_MODE_OUTPUT); // 切回IO功能
+            LL_GPIO_SetPinMode(JTAG_TMS_DI_GPIO_Port, JTAG_TMS_DI_Pin, LL_GPIO_MODE_INPUT);  // 切回IO功能
+            LL_GPIO_SetPinMode(JTAG_TDI_GPIO_Port, JTAG_TDI_Pin, LL_GPIO_MODE_OUTPUT);       // 切回IO功能
+            LL_GPIO_SetPinMode(JTAG_TDO_GPIO_Port, JTAG_TDO_Pin, LL_GPIO_MODE_INPUT);        // 切回IO功能
+            break;
+
+        default:
+            break;
+        }
+    }
+    else
+    {
+        // 切回复用功能
+        switch (port_enable)
+        {
+        case JTAG_PORT_SWD:
+            LL_GPIO_SetPinMode(JTAG_TCK_GEN_GPIO_Port, JTAG_TCK_GEN_Pin, LL_GPIO_MODE_ALTERNATE); // 切回AF功能
+            LL_GPIO_SetPinMode(JTAG_TMS_DO_GPIO_Port, JTAG_TMS_DO_Pin, LL_GPIO_MODE_ALTERNATE);   // 切回AF功能
+            LL_GPIO_SetPinMode(JTAG_TMS_DI_GPIO_Port, JTAG_TMS_DI_Pin, LL_GPIO_MODE_ALTERNATE);   // 切回AF功能
+            break;
+        case JTAG_PORT_JTAG:
+            LL_GPIO_SetPinMode(JTAG_TCK_GEN_GPIO_Port, JTAG_TCK_GEN_Pin, LL_GPIO_MODE_ALTERNATE); // 切回AF功能
+            LL_GPIO_SetPinMode(JTAG_TMS_DO_GPIO_Port, JTAG_TMS_DO_Pin, LL_GPIO_MODE_ALTERNATE);   // 切回AF功能
+            LL_GPIO_SetPinMode(JTAG_TMS_DI_GPIO_Port, JTAG_TMS_DI_Pin, LL_GPIO_MODE_ALTERNATE);   // 切回AF功能
+            LL_GPIO_SetPinMode(JTAG_TDI_GPIO_Port, JTAG_TDI_Pin, LL_GPIO_MODE_ALTERNATE);         // 切回AF功能
+            LL_GPIO_SetPinMode(JTAG_TDO_GPIO_Port, JTAG_TDO_Pin, LL_GPIO_MODE_ALTERNATE);         // 切回AF功能
+            break;
+
+        default:
+            break;
+        }
+    }
 }

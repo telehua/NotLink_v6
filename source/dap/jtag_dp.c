@@ -51,7 +51,7 @@ void JTAG_Sequence(uint32_t info, const uint8_t *tdi, uint8_t *tdo)
 
     uint32_t n_cycle, n_byte;
 
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     bsp_jtag_enable_spi_tdi_tdo();
     bsp_jtag_enable_transfer_tdi_tdo();
@@ -89,7 +89,7 @@ uint32_t JTAG_ReadIDCode(void)
     uint8_t tms;
     uint8_t tdi;
 
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     bsp_jtag_enable_spi_tms();
     bsp_jtag_enable_spi_tdi_tdo();
@@ -184,7 +184,7 @@ void JTAG_WriteAbort(uint32_t data)
     uint8_t tms;
     uint8_t tdi;
 
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     bsp_jtag_enable_spi_tms();
     bsp_jtag_enable_spi_tdi_tdo();
@@ -316,7 +316,7 @@ void JTAG_IR(uint32_t ir)
     uint8_t tms;
     uint8_t tdi;
 
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     bsp_jtag_enable_spi_tms();
     bsp_jtag_enable_spi_tdi_tdo();
@@ -472,7 +472,7 @@ uint8_t JTAG_Transfer(uint32_t request, uint32_t *data)
     uint8_t tms;
     uint8_t tdi;
 
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     bsp_jtag_enable_spi_tms();
     bsp_jtag_enable_spi_tdi_tdo();

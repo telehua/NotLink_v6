@@ -77,7 +77,7 @@ void SWJ_Pins(const uint8_t *request, uint8_t *response)
            (((uint32_t)request[4]) << 16) |
            (((uint32_t)request[5]) << 24);
 
-    DAP_CheckGpioMode(1U);
+    bsp_jtag_check_gpio_mode(1U);
 
     if ((select & (1U << DAP_SWJ_SWCLK_TCK)) != 0U)
     {
@@ -183,10 +183,10 @@ void SWJ_Sequence(uint32_t count, const uint8_t *data)
 
     if (count == 0)
     {
-        return;
+        count = 256;
     }
 
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     bsp_jtag_enable_spi_tms();
     bsp_jtag_enable_transfer_tms();
@@ -223,7 +223,7 @@ void SWJ_Sequence(uint32_t count, const uint8_t *data)
  */
 void SWD_Sequence(uint32_t info, const uint8_t *swdo, uint8_t *swdi)
 {
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     uint8_t *di_buff = swd_rx_buff;
     uint8_t *do_buff = swd_tx_buff;
@@ -280,13 +280,13 @@ uint8_t SWD_Transfer(uint32_t request, uint32_t *data)
 {
     // data可能为NULL
 
-    DAP_CheckGpioMode(0U);
+    bsp_jtag_check_gpio_mode(0U);
 
     bsp_jtag_enable_spi_tms();
     bsp_jtag_enable_transfer_tms();
 
     uint8_t req_raw = request & 0x0FU;
-    uint8_t req_parity = parity_table[req_raw] & 0x01;          /* 奇偶校验，奇1偶0 */
+    uint8_t req_parity = parity_table[req_raw];                 /* 奇偶校验，奇1偶0 */
     uint8_t req = 0x81U | (req_raw << 1U) | (req_parity << 5U); /* req 8bit */
 
     // ulog_debug("data: 0x%X", data_val);
@@ -303,8 +303,8 @@ uint8_t SWD_Transfer(uint32_t request, uint32_t *data)
     uint32_t ack_n_bytes = (ack_n_cycle + 7U) / 8U;
 
     bsp_jtag_write_tms_tx_fifo(&req, ack_n_bytes); // 发ACK，先塞到FIFO里，加速操作
-    bsp_jtag_read_tms_rx_fifo_byte(swd_rx_buff);   //
-    JTAG_TMS_OEN_LOW();                            // 输入
+    bsp_jtag_read_tms_rx_fifo_byte(swd_rx_buff);   // 等request Byte传输完毕
+    JTAG_TMS_OEN_LOW();                            // SWDIO方向改成输入
 
     /* ACK *******************************************************************/
 
@@ -332,7 +332,7 @@ uint8_t SWD_Transfer(uint32_t request, uint32_t *data)
     }
     data_n_bytes = (data_n_cycle + 7U) / 8U;
 
-    bsp_jtag_read_tms_rx_fifo(swd_rx_buff, ack_n_bytes);                    // 收ACK
+    bsp_jtag_read_tms_rx_fifo(swd_rx_buff, ack_n_bytes);                    // 等ACK传输完毕，收ACK
     uint8_t ack = (swd_rx_buff[0] >> dap_data.swd_conf.turnaround) & 0x07U; // TRN最大4bit，只需要读第一字节
     // bsp_jtag_clean_tms_rx_fifo(swd_rx_buff, JTAG_SPI_FIFO_SIZE);
 
@@ -347,6 +347,7 @@ uint8_t SWD_Transfer(uint32_t request, uint32_t *data)
         {
             bsp_jtag_write_tms_tx_fifo(swd_tx_buff, data_n_bytes);
             bsp_jtag_generate_data_cycle(data_n_cycle, data_n_bytes);
+            // 一边收一边计算校验值
             bsp_jtag_read_tms_rx_fifo_byte(&data_val_u8p[0]);
             data_parity = parity_table[data_val_u8p[0]]; // 重置
             bsp_jtag_read_tms_rx_fifo_byte(&data_val_u8p[1]);
@@ -356,12 +357,12 @@ uint8_t SWD_Transfer(uint32_t request, uint32_t *data)
             bsp_jtag_read_tms_rx_fifo_byte(&data_val_u8p[3]);
             data_parity += parity_table[data_val_u8p[3]];
 
-            if (data)
+            if (data) // NULL则丢弃数据
             {
                 *data = data_val;
             }
 
-            bsp_jtag_read_tms_rx_fifo(swd_rx_buff, data_n_bytes - 4U); // 校验值
+            bsp_jtag_read_tms_rx_fifo(swd_rx_buff, data_n_bytes - 4U); // 收校验值
             if ((swd_rx_buff[0] ^ data_parity) & 0x01U)
             {
                 ack = DAP_TRANSFER_ERROR;
