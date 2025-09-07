@@ -578,8 +578,11 @@ void bsp_jtag_disable_vout(void)
  */
 uint32_t bsp_jtag_set_tck_clock(uint32_t freq)
 {
-    freq = (freq / 1000) * 1000;
+    // 消除尾数
+    // freq = (freq / 1000) * 1000;
+    freq = freq - (freq % 1000);
 
+    // 管控有效值
     if (freq > JTAG_SWJ_FREQ_MAX)
     {
         freq = JTAG_SWJ_FREQ_MAX;
@@ -589,8 +592,9 @@ uint32_t bsp_jtag_set_tck_clock(uint32_t freq)
         freq = JTAG_SWJ_FREQ_MIN;
     }
 
-    uint32_t div = (JTAG_TIM_CLOCK_FREQ + (freq - 1000)) / freq; // 每周期的计数值
+    uint32_t div = (JTAG_TIM_CLOCK_FREQ + (freq - 1)) / freq; // 每周期的计数值
 
+    // 通过预分频器将计数器值限制到合理范围
     uint32_t pre = 1;
     while ((div * (8U * JTAG_SPI_FIFO_SIZE + 1U) / pre) > 65535U)
     {
@@ -775,14 +779,14 @@ __INLINE void bsp_jtag_write_tdi_tx_fifo(uint8_t *data_buff, uint32_t n_bytes)
 __INLINE void bsp_jtag_read_tdo_rx_fifo(uint8_t *data_buff, uint32_t n_bytes)
 {
     uint8_t *end = data_buff + n_bytes;
-    do
+    while (data_buff < end)
     {
         if (LL_SPI_IsActiveFlag_RXP(SPI3))
         {
             *data_buff = LL_SPI_ReceiveData8(SPI3);
             data_buff++;
         }
-    } while (data_buff < end);
+    }
 }
 
 /**
@@ -920,6 +924,7 @@ __INLINE void bsp_jtag_disable_transfer_tdi_tdo(void)
  */
 void bsp_jtag_check_gpio_mode(uint32_t mode)
 {
+    // 不需要修改
     if (port_gpio_mode == mode)
     {
         return;

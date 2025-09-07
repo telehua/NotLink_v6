@@ -42,8 +42,7 @@ target_include_directories(${PROJECT_NAME}
 )
 
 # 添加链接脚本
-set_target_linker(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/scripts/ldscripts/STM32H750VBTX_APP_QSPI.ld)
-# set_target_linker(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/scripts/ldscripts/STM32H750VBTX_APP_FLASH.ld)
+set_target_linker(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/scripts/ldscripts/STM32H750VBTX_APP_SPI.ld)
 
 # 生成二进制文件
 generate_hex()

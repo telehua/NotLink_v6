@@ -19,6 +19,7 @@ static TX_THREAD thread_dap;
 #define THREAD_DAP_STACK_SIZE (1024U * 8)
 uint32_t thread_dap_stack[THREAD_DAP_STACK_SIZE / 4];
 
+
 int main(void)
 {
     board_init();
