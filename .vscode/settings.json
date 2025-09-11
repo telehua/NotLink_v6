@@ -8,12 +8,6 @@
         "*.h": "c",
         "*.c": "c",
         "*.in": "c",
-        "bitset": "c",
-        "algorithm": "c",
-        "format": "c"
     },
-    "python-envs.defaultEnvManager": "ms-python.python:conda",
-    "python-envs.defaultPackageManager": "ms-python.python:conda",
-    "python-envs.pythonProjects": [],
     "cortex-debug.variableUseNaturalFormat": false,
 }

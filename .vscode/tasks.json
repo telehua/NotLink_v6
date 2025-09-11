@@ -139,5 +139,31 @@
 			],
 			"problemMatcher": [],
 		},
+		{
+			"type": "shell",
+			"label": "openocd_load_flash_boot",
+			"command": "${workspaceFolder}/toolchain/openocd/bin/openocd.exe",
+			"args": [
+				"-f",
+				"${workspaceFolder}/toolchain/openocd/share/openocd/scripts/interface/cmsis-dap.cfg",
+				"-f",
+				"${workspaceFolder}/toolchain/openocd/share/openocd/scripts/target/stm32h7x.cfg",
+				"-c",
+				"transport select swd",
+				"-c",
+				"adapter speed 10000",
+				"-c",
+				"init",
+				"-c",
+				"reset halt; wait_halt",
+				"-c",
+				"flash write_image erase ./build/source/boot/boot.hex",
+				"-c",
+				"reset",
+				"-c",
+				"shutdown"
+			],
+			"problemMatcher": [],
+		},
 	]
 }

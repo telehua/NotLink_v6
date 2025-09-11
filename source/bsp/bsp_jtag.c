@@ -130,6 +130,10 @@ void bsp_jtag_enable_port(jtag_port_t port)
 
     bsp_jtag_deinit(); // 重置所有引脚为高阻态
 
+    LL_RCC_ClocksTypeDef clks;
+    LL_RCC_GetSystemClocksFreq(&clks);
+    uint32_t tim_freq = clks.HCLK_Frequency;
+
     /* 分配功能引脚 */
     switch (port)
     {
@@ -165,7 +169,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         LL_TIM_DeInit(TIM8);
         TIM_InitStruct.Prescaler = 0;
         TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-        TIM_InitStruct.Autoreload = ((JTAG_TIM_CLOCK_FREQ / 10000000) - 1); // 默认10M
+        TIM_InitStruct.Autoreload = ((tim_freq / 10000000) - 1); // 默认10M
         TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
         TIM_InitStruct.RepetitionCounter = 0;
         LL_TIM_Init(TIM8, &TIM_InitStruct);
@@ -182,7 +186,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
         TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_ENABLE; // 使能输出
         TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-        TIM_OC_InitStruct.CompareValue = ((JTAG_TIM_CLOCK_FREQ / 10000000) / 2);
+        TIM_OC_InitStruct.CompareValue = ((tim_freq / 10000000) / 2);
         TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH; // 极性高
         TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
         TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
@@ -211,7 +215,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         LL_TIM_StructInit(&TIM_InitStruct);
         TIM_InitStruct.Prescaler = 0;
         TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-        TIM_InitStruct.Autoreload = 8 * (JTAG_TIM_CLOCK_FREQ / 10000000) + (JTAG_TIM_CLOCK_FREQ / 10000000) / 4 - 1;
+        TIM_InitStruct.Autoreload = 8 * (tim_freq / 10000000) + (tim_freq / 10000000) / 4 - 1;
         TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
         LL_TIM_Init(TIM4, &TIM_InitStruct);
         LL_TIM_EnableARRPreload(TIM4);
@@ -228,7 +232,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;     // PWM1模式
         TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_ENABLE; // 使能输出
         TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-        TIM_OC_InitStruct.CompareValue = 8 * (JTAG_TIM_CLOCK_FREQ / 10000000) + (JTAG_TIM_CLOCK_FREQ / 10000000) / 4;
+        TIM_OC_InitStruct.CompareValue = 8 * (tim_freq / 10000000) + (tim_freq / 10000000) / 4;
         TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH; // 极性正
         LL_TIM_OC_Init(TIM4, LL_TIM_CHANNEL_CH1, &TIM_OC_InitStruct);
         LL_TIM_OC_DisableFast(TIM4, LL_TIM_CHANNEL_CH1);
@@ -315,7 +319,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         LL_TIM_DeInit(TIM8);
         TIM_InitStruct.Prescaler = 0;
         TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-        TIM_InitStruct.Autoreload = ((JTAG_TIM_CLOCK_FREQ / 10000000) - 1); // 默认10M
+        TIM_InitStruct.Autoreload = ((tim_freq / 10000000) - 1); // 默认10M
         TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
         TIM_InitStruct.RepetitionCounter = 0;
         LL_TIM_Init(TIM8, &TIM_InitStruct);
@@ -331,7 +335,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
         TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_ENABLE; // 使能输出
         TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-        TIM_OC_InitStruct.CompareValue = ((JTAG_TIM_CLOCK_FREQ / 10000000) / 2);
+        TIM_OC_InitStruct.CompareValue = ((tim_freq / 10000000) / 2);
         TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH; // 极性高
         TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
         TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
@@ -360,7 +364,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         LL_TIM_StructInit(&TIM_InitStruct);
         TIM_InitStruct.Prescaler = 0;
         TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-        TIM_InitStruct.Autoreload = 8 * (JTAG_TIM_CLOCK_FREQ / 10000000) + (JTAG_TIM_CLOCK_FREQ / 10000000) / 4 - 1;
+        TIM_InitStruct.Autoreload = 8 * (tim_freq / 10000000) + (tim_freq / 10000000) / 4 - 1;
         TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
         LL_TIM_Init(TIM4, &TIM_InitStruct);
         LL_TIM_EnableARRPreload(TIM4);
@@ -376,7 +380,7 @@ void bsp_jtag_enable_port(jtag_port_t port)
         TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;     // PWM1模式
         TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_ENABLE; // 使能输出
         TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-        TIM_OC_InitStruct.CompareValue = 8 * (JTAG_TIM_CLOCK_FREQ / 10000000) + (JTAG_TIM_CLOCK_FREQ / 10000000) / 4;
+        TIM_OC_InitStruct.CompareValue = 8 * (tim_freq / 10000000) + (tim_freq / 10000000) / 4;
         TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH; // 极性正
         LL_TIM_OC_Init(TIM4, LL_TIM_CHANNEL_CH1, &TIM_OC_InitStruct);
         LL_TIM_OC_DisableFast(TIM4, LL_TIM_CHANNEL_CH1);
@@ -592,7 +596,11 @@ uint32_t bsp_jtag_set_tck_clock(uint32_t freq)
         freq = JTAG_SWJ_FREQ_MIN;
     }
 
-    uint32_t div = (JTAG_TIM_CLOCK_FREQ + (freq - 1)) / freq; // 每周期的计数值
+    LL_RCC_ClocksTypeDef clks;
+    LL_RCC_GetSystemClocksFreq(&clks);
+    uint32_t tim_freq = clks.HCLK_Frequency;
+
+    uint32_t div = (tim_freq + (freq - 1)) / freq; // 每周期的计数值
 
     // 通过预分频器将计数器值限制到合理范围
     uint32_t pre = 1;
@@ -603,7 +611,7 @@ uint32_t bsp_jtag_set_tck_clock(uint32_t freq)
 
     uint32_t count = div / pre;
     tim_div_count = count;
-    uint32_t real_freq = (JTAG_TIM_CLOCK_FREQ / pre) / count; // 实际频率
+    uint32_t real_freq = (tim_freq / pre) / count; // 实际频率
 
     LL_TIM_SetPrescaler(TIM8, pre - 1U);
     LL_TIM_SetPrescaler(TIM4, pre - 1U);

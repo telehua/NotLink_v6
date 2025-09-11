@@ -152,12 +152,11 @@
 #define JTAG_RESET_IN() ((LL_GPIO_ReadInputPort(JTAG_RESET_GPIO_Port) & JTAG_RESET_Pin) != 0)
 #define JTAG_DBGRQ_IN() ((LL_GPIO_ReadInputPort(JTAG_DBGRQ_RXD_GPIO_Port) & JTAG_DBGRQ_RXD_Pin) != 0)
 
-#define JTAG_REG_OPTIMIZE (1)                    // 寄存器优化
-#define JTAG_TIM_CLOCK_FREQ (240 * 1000 * 1000U) // 定时器时钟
-#define JTAG_SPI_FIFO_SIZE (16U)                 // SPI FIFO 深度
-#define JTAG_SWJ_FREQ_MAX (60 * 1000 * 1000U)    // 最大频率
-#define JTAG_SWJ_FREQ_MIN (5 * 1000)             // 最小频率
-#define JTAG_CLK_DUTY_CYCLE (1.0F / 2U)          // 占空比
+#define JTAG_REG_OPTIMIZE (1)                 // 寄存器优化
+#define JTAG_SPI_FIFO_SIZE (16U)              // SPI FIFO 深度
+#define JTAG_SWJ_FREQ_MAX (60 * 1000 * 1000U) // 最大频率
+#define JTAG_SWJ_FREQ_MIN (5 * 1000)          // 最小频率
+#define JTAG_CLK_DUTY_CYCLE (1.0F / 2U)       // 占空比
 
 typedef enum _jtag_port_enum
 {
